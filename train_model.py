@@ -76,7 +76,6 @@ try:
     df_historical = pd.read_sql(query_historical, conn)
     query_real_time = "SELECT * FROM real_time_data_table"
     df_real_time = pd.read_sql(query_real_time, conn)
-    conn.close()
     
     if df_historical.empty:
         log_result("Data Fetching (Historical)", False, "No historical data retrieved from database")
@@ -90,6 +89,8 @@ try:
 
 except mysql.connector.Error as err:
     log_result("Database Fetching", False, f"Error: {err}")
+
+    conn.close()
 
 # define feature categories
 high_variability_features = [
@@ -194,6 +195,10 @@ except Exception as e:
 
 # Phase 7: Prediction and data sent to Power BI
 def send_data_to_power_bi():
+    if df_real_time.empty:
+        log_result("Power BI Data Upload", False, "Skipped: No real-time data available.")
+        return
+    
     if not check_power_bi_table():
         log_result("Power BI Data Upload", False, "Dataset or Table does not exist")
         return
@@ -202,7 +207,7 @@ def send_data_to_power_bi():
         "Content-Type": "application/json",
         "Authorization": f"Bearer {POWER_BI_ACCESS_TOKEN}"
     }
-    data_to_send = {"value": df.to_dict(orient="records")}
+    data_to_send = {"value": df_real_time.to_dict(orient="records")}
     power_bi_url = f"{POWER_BI_BASE_URL}/{POWER_BI_DATASET_ID}/tables/{POWER_BI_TABLE_NAME}/rows"
     response = requests.post(power_bi_url, json=data_to_send, headers=headers)
     if response.status_code == 200:

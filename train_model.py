@@ -7,7 +7,7 @@
 
 # skleran - It provides a wide range of tools for preprocessing, modeling, evaluating and deploying machine learning models.
 import os
-import mysql.connector
+# import mysql.connector
 import pandas as pd # helps load the data fram in a 2D array format and has multiple functions to perform analysis
 import numpy as np # Fast and performs large computations in a short time
 import joblib
@@ -20,6 +20,7 @@ from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.compose import ColumnTransformer
 import requests
+from sqlalchemy import create_engine
 
 # Power BI Configurations
 POWER_BI_ACCESS_TOKEN = "your_access_token"
@@ -55,27 +56,23 @@ def log_result(phase, success=True, message=""):
 
 # Phase 1: Database Connection Test
 # Load data from Database.
-db_config = {
-    "host": os.getenv("MYSQL_HOST"),
-    "user": os.getenv("MYSQL_USER"),
-    "password": os.getenv("MYSQL_PASSWORD"),
-    "database": os.getenv("MYSQL_DB")
-}
+# Database connection using SQLAlchemy
+db_username = "root"
+db_password = "Adex127!Apple"
+db_host = "127.0.0.1"  # Forces TCP/IP to avoid named pipe errors
+db_name = "nba_analysis"
 
-try:
-    conn = mysql.connector.connect(**db_config)
-    print("Secure Database Connection Successful")
-except mysql.connector.Error as err:
-    log_result("Database Connection", False, f"Error: {err}")
+# Create the SQLAlchemy engine
+engine = create_engine(f"mysql+pymysql://{db_username}:{db_password}@{db_host}/{db_name}")
 
 
 # Phase 2: Proper fetching of data
 # Pulls from two separate tables, one contains historical data, the other real-time data.
 try:
     query_historical = "SELECT * FROM historical_data_table"
-    df_historical = pd.read_sql(query_historical, conn)
+    df_historical = pd.read_sql(query_historical, engine)
     query_real_time = "SELECT * FROM real_time_data_table"
-    df_real_time = pd.read_sql(query_real_time, conn)
+    df_real_time = pd.read_sql(query_real_time, engine)
     
     if df_historical.empty:
         log_result("Data Fetching (Historical)", False, "No historical data retrieved from database")
@@ -87,10 +84,8 @@ try:
     else:
         log_result("Data Fetching (Real-Time)")
 
-except mysql.connector.Error as err:
+except Exception as err:
     log_result("Database Fetching", False, f"Error: {err}")
-
-    conn.close()
 
 # define feature categories
 high_variability_features = [
@@ -106,14 +101,32 @@ normal_features = [
 
 # Phase 3: Cleaning the data and Feature Extraction
 try:
+    print(f"Before Cleaning: {df_historical.shape[0]} rows, {df_historical.shape[1]} columns")
     df_historical.drop_duplicates(inplace=True) # check for duplicate rows
     df_historical.dropna(inplace=True) # Dynamically removes missing values
-    df_historical = df_historical.loc[:, df_historical.apply(pd.Series.nunique) > 1] # Removes features containing one unique value
+
+    if df_historical.shape[0] > 1:
+        df_historical = df_historical.loc[:, df_historical.apply(pd.Series.nunique) > 1] # Removes features containing one unique value
+
+    print(f"After Cleaning: {df_historical.shape[0]} rows, {df_historical.shape[1]} columns")
 
     # Dynamically selects features
     # X contains potential predictor features while y is the target variable (i.e three-point percentages)
-    X = df_historical.drop(columns=['target_column']) # Independent variables
+    print("Available Columns in df_historical:", df_historical.columns.tolist())
+
+    # Ensure the correct target column exists
+    if 'target_column' not in df_historical.columns:
+        print("Available Columns:", df_historical.columns.tolist())
+        raise ValueError("Error: 'target_column' is missing in historical data")
+    
+    # Drops non-nummeric columns
+    non_numeric_columns = df_historical.select_dtypes(exclude=['number']).columns.tolist()
+    X = df_historical.drop(columns=['target_column'] + non_numeric_columns) # Independent variables
     y = df_historical['target_column'] # Dependent Variable
+
+    # Ensure we have at least 1 feature before proceeding
+    if X.shape[1] == 0:
+        raise ValueError("Error: No numeric features left after preprocessing.")
 
     # Select best features based on statistical test
     # Each feature in X is evaluated for how strongly it correlates with y.
@@ -123,6 +136,8 @@ try:
     # Get selected feature names and scores
     selected_features = X.columns[selector.get_support()]
     feature_scores = dict(zip(X.columns, selector.scores_))
+    
+    print(f"Selected Features: {list(selected_features)}")
     
 
     # Save score to log file
@@ -137,16 +152,30 @@ except Exception as e:
 
 # Phase 4: Data Preprocessing
 try:
+    print(f"Preprocessing data...")
+
+    # Have to convert back to dataframe
+    X_selected_df = pd.DataFrame(X_selected, columns=selected_features)
+
+
     # If needed the strategy value can be changed to (median, most_frequent, or constant)
     # SimpleImputer works by filling missing values with the 'strategy' value
     imputer = SimpleImputer(strategy="mean")
-    X_imputed = imputer.fit_transform(X_selected)
+    X_imputed = imputer.fit_transform(X_selected_df)
+
+    # Convert to DataFrame after imputation
+    X_imputed_df = pd.DataFrame(X_imputed, columns=selected_features)
+
+    high_variability_selected = [feat for feat in high_variability_features if feat in selected_features]
+    normal_features_selected = [feat for feat in normal_features if feat in selected_features]
     # StandardScaler normalizes the data ensuring all fetaures are on the same scale.
     scaler = ColumnTransformer([
-        ("robust", RobustScaler(), high_variability_features),
-        ("standard", StandardScaler(), normal_features)
-    ])
-    X_scaled = scaler.fit_transform(X_imputed)
+        ("robust", RobustScaler(), high_variability_selected),
+        ("standard", StandardScaler(), normal_features_selected)
+    ], remainder="passthrough")
+    X_scaled = scaler.fit_transform(X_imputed_df)
+
+    print("Feature Scaling Successful!")
 
     # Save the scalers
     joblib.dump(scaler, 'scaler.pkl')
@@ -157,11 +186,14 @@ except Exception as e:
 # Phase 5: Model Training
 # randomregression is used to produce a more accurate and stable prediction. (utilizes decision trees)
 try:
+    print(f"Trainig model ...")
+
     X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
 
+    print(f"Model Training complete")
     joblib.dump(model, 'model.pkl')
 
     log_result("Model Training")
@@ -170,6 +202,8 @@ except Exception as e:
 
 # Phase 6: Evaluate model on Historical data and real-time data
 try:
+    print(f"Evaluating the model")
+
     # Historical Test Evaluation
     y_pred_historical = model.predict(X_test)
     mae_historical = mean_absolute_error(y_test, y_pred_historical)
@@ -177,8 +211,20 @@ try:
     log_result("Model Evaluation (Historical Data)", True, f"MAE: {mae_historical:.4f}, R²: {r2_historical:.4f}")
 
     # Real-Time Data Evaluation (if real-time data is available)
-    real_time_df = pd.read_sql("SELECT * FROM real_time_table", conn)  # Fetch real-time data
-    if not real_time_df.empty:
+    real_time_df = pd.read_sql("SELECT * FROM real_time_data_table", engine) # Fetch real-time data
+    if real_time_df.empty:
+        log_result("Model Evaluation (Real-Time Data)", False, "No real-time data available")
+    else:
+        # Check and log missing columns
+        missing_columns = []
+        for col in X.columns:
+            if col not in real_time_df.columns:
+                real_time_df[col] = 0  # Set default value if missing
+                missing_columns.append(col)
+
+        # Log if columns were missing and added
+        if missing_columns:
+            log_result("Model Evaluation (Real-Time Data)", False, f"Missing columns handled: {', '.join(missing_columns)}")
         X_real_time = real_time_df.drop(columns=['target_column'])
         y_real_time = real_time_df['target_column']
         X_real_time_scaled = scaler.transform(X_real_time)  # Ensure correct scaling
@@ -186,9 +232,10 @@ try:
 
         mae_real_time = mean_absolute_error(y_real_time, y_pred_real_time)
         r2_real_time = r2_score(y_real_time, y_pred_real_time)
-        log_result("Model Evaluation (Real-Time Data)", True, f"MAE: {mae_real_time:.4f}, R²: {r2_real_time:.4f}")
-    else:
-        log_result("Model Evaluation (Real-Time Data)", False, "No real-time data available")
+
+        print(f"Model Evaluatoin completed")
+
+        log_result("Model Evaluation (Real-Time Data)", True, f"MAE: {mae_real_time:.4f}, R²: {r2_real_time:.4f}")      
 
 except Exception as e:
     log_result("Model Evaluation", False, str(e))
@@ -215,6 +262,11 @@ def send_data_to_power_bi():
     else:
         log_result("Power BI Data Upload", False, f"Error {response.status_code}: {response.text}")
 
-send_data_to_power_bi()
+# Prevents a crash if df_real_time' is missing due to DB failure
+if 'df_real_time' in locals() and not df_real_time.empty:
+    send_data_to_power_bi()
+else:
+    print("Full Training & Testing Process Completed Successfully!")
 
-print("Full Training & Testing Process Completed Successfully!")
+engine.dispose()
+print("Database Connection Closed")

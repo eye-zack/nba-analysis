@@ -18,33 +18,33 @@ import time
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-'''input_csv = "nba_historical_stats.csv"
+input_csv = "nba_historical_stats.csv"
 try:
     df = pd.read_csv(input_csv)
     logging.info(f"Dataset loaded: {input_csv}")
 except FileNotFoundError:
     logging.error(f"Dataset not found: {input_csv}")
     raise SystemExit
-    '''
 
-DB_CONNECTION = "mysql+mysqlconnector://root:Adex127!Apple@localhost:3306/nba_analysis" # Change creds
-TABLE_NAME = "historical_data_table"
 
-engine = create_engine(DB_CONNECTION)
-try:
-    with engine.connect() as connection:
-        df = pd.read_sql(f"SELECT * FROM {TABLE_NAME} WHERE Player != 'Team Totals'", con=connection)
-    logging.info(f"Dataset loaded: {TABLE_NAME}")
-except Exception as e:
-    logging.error(f"Dataset not loaded: {e}")
-    raise SystemExit
+# DB_CONNECTION = "mysql+mysqlconnector://root:Adex127!Apple@localhost:3306/nba_analysis" # Change creds
+# TABLE_NAME = "historical_data_table"
+
+# engine = create_engine(DB_CONNECTION)
+# try:
+#     with engine.connect() as connection:
+#         df = pd.read_sql(f"SELECT * FROM {TABLE_NAME} WHERE Player != 'Team Totals'", con=connection)
+#     logging.info(f"Dataset loaded: {TABLE_NAME}")
+# except Exception as e:
+#     logging.error(f"Dataset not loaded: {e}")
+#     raise SystemExit
 
 df_team_totals = df[df["Player"] == "Team Totals"]
 df_players = df[df["Player"] != "Team Totals"]
 df = df_players.copy()
 logging.info("Team totals separated from player data.")
 
-remove_columns = ["Awards","Pos","Age","Rk","Player","TEAM"]
+remove_columns = ["Age","Rk","Player","TEAM"]
 df.drop(columns=remove_columns, inplace=True)
 logging.info(f"Columns removed: {remove_columns}")
 

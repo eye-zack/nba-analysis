@@ -3,7 +3,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 
 # Change creds.
-DB_CONNECTION = "mysql+mysqlconnector://root:root@localhost:3306/nba_analysis"
+DB_CONNECTION = "nbadatabase.cpqyso4akjr1.us-east-2.rds.amazonaws.com"
 TABLE_NAME = "historical_data_table"
 CSV_FILE = "nba_historical_stats.csv"
 

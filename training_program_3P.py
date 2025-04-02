@@ -27,7 +27,7 @@ except FileNotFoundError:
     raise SystemExit
 
 
-# DB_CONNECTION = "mysql+mysqlconnector://root:Adex127!Apple@localhost:3306/nba_analysis" # Change creds
+# DB_CONNECTION = "mysql+mysqlconnector://root:root@localhost:3306/nba_analysis" # Change creds
 # TABLE_NAME = "historical_data_table"
 
 # engine = create_engine(DB_CONNECTION)

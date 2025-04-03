@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "./SignupPage.css";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 function SignupPage() {
   const [email, setEmail] = useState("");
@@ -8,7 +9,12 @@ function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+
+  const sanitizeInput = (input) => {
+    return input.replace(/[<>"'`]/g, "").trim();
+  };
 
   //email must be valid format '.com'
   const validateEmail = (email) => {
@@ -25,29 +31,33 @@ function SignupPage() {
   const handleSignup = async (e) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
 
-    if (!validateEmail(email)) {
-      setError("Please enter a valid email address.")
+    const sanitizedEmail = sanitizeInput(email);
+    const sanitizedPassword = sanitizeInput(password);
+    const sanitizedConfirmPassword = sanitizeInput(confirmPassword);
+
+    if (!validateEmail(sanitizedEmail)) {
+      setError("Please enter a valid email address.");
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (sanitizedPassword !== sanitizedConfirmPassword) {
       setError("Passwords do not match");
       return;
     }
 
-    if (!validatePassword(password)) {
-        setError("Password must be at least 8 characters long and include an uppercase letter, lowercase letter, a number, and a special character.");
-        return;
-      }
+    if (!validatePassword(sanitizedPassword)) {
+      setError("Password must be at least 8 characters long and include an uppercase letter, lowercase letter, a number, and a special character.");
+      return;
+    }
 
-    // Simulate registration API
-    console.log("Signup successful:", { email, password });
+    console.log("Signup successful:", { email: sanitizedEmail, password: sanitizedPassword });
     setSuccess("Successful account creation! Redirecting to login.");
 
     setTimeout(() => {
-        navigate("/login");
-    }, 2000); 
+      navigate("/login");
+    }, 2000);
   };
 
   return (
@@ -61,15 +71,24 @@ function SignupPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
+        <div className="password-wrapper">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            className="toggle-password"
+            onClick={() => setShowPassword((prev) => !prev)}
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
         <input
-          type="password"
-          placeholder="Password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <input
-          type="password"
+          type={showPassword ? "text" : "password"}
           placeholder="Confirm Password"
           required
           value={confirmPassword}
@@ -79,6 +98,7 @@ function SignupPage() {
         {success && <p className="success">{success}</p>}
         <button type="submit">Register</button>
       </form>
+      <p className="Login-Page">Back to Login <Link to="/login">Login here</Link></p>
     </div>
   );
 }

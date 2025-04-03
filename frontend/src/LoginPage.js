@@ -12,6 +12,10 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
+  const sanitizeInput = (input) => {
+    return input.replace(/[<>"'`]/g, "").trim();
+  };
+
   // email format validation
   const validateEmail = (email) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -25,8 +29,12 @@ function LoginPage() {
     e.preventDefault();
     setError(null);
 
+    const sanitizedEmail = sanitizeInput(email);
+    const sanitizedPassword = sanitizeInput(password);
+
+
     // Checks if email is valid before sending to the backend
-    if (!validateEmail(email)) {
+    if (!validateEmail(sanitizedEmail)) {
         setError("Please enter a valid email address.")
         return;
     }
@@ -39,7 +47,7 @@ function LoginPage() {
     }
 
     // Replace with real login API (backend logic)
-    if (email === "user@example.com" && password === "password") {
+    if (sanitizedEmail === "user@example.com" && sanitizedPassword === "password") {
       navigate("/dashboard");
     } else {
         setAttempts((prev) => prev + 1);

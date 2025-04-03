@@ -1,13 +1,24 @@
-import logo from './logo.svg';
-import './App.css';
+//import logo from './logo.svg';
+//import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import LoginPage from "./LoginPage";
+import DashboardPage from "./DashboardPage";
+import SignupPage from "./SignupPage";
 
 function App() {
+  const isAuthenticated = true;
   return (
-    <div className="App">
-      <header className="App-header">
-      <iframe title="NBA 3-PT Analysis" width="1280" height="720" src="https://app.powerbi.com/reportEmbed?reportId=71c2ed4c-b32e-4ad4-8151-fec20492b6e2&autoAuth=true&ctid=19d57598-97b0-442c-b74e-c855b0d87caf" frameborder="0" allowFullScreen="true"></iframe>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route
+          path="/dashboard"
+          element={isAuthenticated ? <DashboardPage /> : <Navigate to="/login" />}
+        />
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>    </Router>
   );
 }
 

@@ -83,7 +83,7 @@ if __name__ == "__main__":
     new_table_name = "current_data_table"
     reference_table_name = "historical_data_table"
 
-    with open("config.yaml", "r") as file:
+    with open("../../config.yaml", "r") as file:
         config = yaml.safe_load(file)
     targets = config.get("targets", [])
 

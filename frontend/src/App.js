@@ -5,9 +5,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import LoginPage from "./LoginPage";
 import DashboardPage from "./DashboardPage";
 import SignupPage from "./SignupPage";
+import PrivateRoute from './PrivateRoute';
 
 function App() {
-  const isAuthenticated = true;
   return (
     <Router>
       <Routes>
@@ -15,10 +15,16 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route
           path="/dashboard"
-          element={isAuthenticated ? <DashboardPage /> : <Navigate to="/login" />}
+          element={
+            <PrivateRoute>
+              <DashboardPage />
+            </PrivateRoute>
+          }
         />
-        <Route path="*" element={<Navigate to="/login" />} />
-      </Routes>    </Router>
+        {/* Catch-all route for undefined paths */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Router>
   );
 }
 

@@ -3,6 +3,9 @@ from sqlalchemy import create_engine
 import os
 import urllib
 import logging
+from dotenv import load_dotenv
+load_dotenv()
+
 
 def load_data_from_rds():
     DB_USER = os.getenv("DB_USER")

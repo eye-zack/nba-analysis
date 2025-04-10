@@ -15,13 +15,20 @@ import logging
 from sklearn.impute import SimpleImputer
 from sklearn.feature_selection import RFECV
 import urllib
-import time
+from datetime import datetime
+import json
+
+def get_next_version(target, staging_dir):
+    existing = [f for f in os.listdir(staging_dir) if f.startswith(target)]
+    versions = [int(f.split("_v")[1].split("_")[0]) for f in existing if "_v" in f]
+    return max(versions, default=0) + 1
 
 def train_and_save_models(df, config):
 
     target_columns = config.get("targets", [])
-    output_dir = config.get("output_dir", "models")
-    os.makedirs(output_dir, exist_ok=True)
+    base_output_dir = config.get("output_dir", "models")
+    staging_dir = os.path.join(base_output_dir, "staging")
+    os.makedirs(staging_dir, exist_ok=True)
 
     df = df[df["Player"] != "Team Totals"].copy()
     df.drop(columns=["Awards", "Pos", "Age", "Rk", "Player", "TEAM"], errors="ignore", inplace=True)
@@ -74,9 +81,26 @@ def train_and_save_models(df, config):
                 best_r2 = r2
                 best_name = name
 
-        joblib.dump(best_model, f"{output_dir}/{target}_best_model.pkl")
-        joblib.dump(scaler, f"{output_dir}/{target}_scaler.pkl")
-        joblib.dump(best_selector, f"{output_dir}/{target}_selector.pkl")
+        version = get_next_version(target, staging_dir)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+        prefix = f"{target}_v{version}_{timestamp}"
 
-        logging.info(f"Saved best model ({best_name}) for target '{target}' with R²: {best_r2:.4f}")
-        print(f"Saved best model ({best_name}) for target '{target}' with R²: {best_r2:.4f}")
+        joblib.dump(best_model, os.path.join(staging_dir, f"{prefix}_best_model.pkl"))
+        joblib.dump(scaler, os.path.join(staging_dir, f"{prefix}_scaler.pkl"))
+        joblib.dump(best_selector, os.path.join(staging_dir, f"{prefix}_selector.pkl"))
+
+        metadata = {
+            "target": target,
+            "version": f"v{version}_{timestamp}",
+            "model": best_name,
+            "r2": round(best_r2, 4),
+            "mae": round(mae, 4)
+        }
+
+        with open(os.path.join(staging_dir, f"{prefix}.json"), "w") as meta_file:
+            json.dump(metadata, meta_file, indent=4)
+
+        logging.info(f"Saved best model ({best_name}) for target '{target}' as {prefix} with R²: {best_r2:.4f}")
+        print(f"Saved best model ({best_name}) for target '{target}' as {prefix} with R²: {best_r2:.4f}")
+
+

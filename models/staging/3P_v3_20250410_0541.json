@@ -1,0 +1,7 @@
+{
+    "target": "3P",
+    "version": "v3_20250410_0541",
+    "model": "GradientBoosting",
+    "r2": 0.9146,
+    "mae": 0.1209
+}

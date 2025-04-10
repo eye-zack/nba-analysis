@@ -1,7 +1,7 @@
 import logging
 from dotenv import load_dotenv
 import yaml
-from backend.ML_training.db_loader import load_data_from_rds
+from db_loader import load_data_from_rds
 from training_program import train_and_save_models
 import os
 
@@ -16,7 +16,7 @@ def main():
 
     logging.info("Starting ML training pipeline...")
 
-    with open("../../config.yaml", "r") as file:
+    with open("config.yaml", "r") as file:
         config = yaml.safe_load(file)
 
     df = load_data_from_rds()

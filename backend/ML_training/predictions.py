@@ -30,7 +30,7 @@ def preprocess_new_data(new_df, reference_df):
     new_df[new_df.select_dtypes(include=np.number).columns] = imputer.fit(reference_df).transform(new_df.select_dtypes(include=np.number))
     return new_df
 
-def load_data_from_db(table_name):
+def load_data_from_db(table_name, team=None, season=None):
     DB_USER = os.getenv("DB_USER")
     DB_PASS = urllib.parse.quote_plus(os.getenv("DB_PASS"))
     DB_HOST = os.getenv("DB_HOST")
@@ -40,12 +40,17 @@ def load_data_from_db(table_name):
     DB_URL = f"mysql+mysqlconnector://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
     engine = create_engine(DB_URL)
     with engine.connect() as conn:
+        query = f"SELECT * FROM {table_name} WHERE Player != 'Team Totals'"
+        if team:
+            query += f" AND TEAM = '{team}'"
+        if season:
+            query += f" AND Season = {season}"
         df = pd.read_sql(f"SELECT * FROM {table_name}", conn)
     return df
 
-def predict_all_targets(new_table, reference_table, targets, model_dir="models"):
+def predict_all_targets(new_table, reference_table, targets, model_dir="models", team=None, season=None):
     logging.info("Loading data from database")
-    new_df = load_data_from_db(new_table)
+    new_df = load_data_from_db(new_table, team=team, season=season)
     ref_df = load_data_from_db(reference_table)
     ref_df = ref_df[ref_df["Player"] != "Team Totals"].copy()
     ref_df.drop(columns=["Awards", "Pos", "Age", "Rk", "Player", "TEAM"], inplace=True, errors='ignore')
@@ -78,6 +83,16 @@ def predict_all_targets(new_table, reference_table, targets, model_dir="models")
 
     logging.info("Prediction complete for all targets")
     return results
+
+def get_latest_model_prefix(target, staging_dir):
+    matching_files = [f for f in os.listdir(staging_dir) if f.startswith(target) and f.endswith("_best_model.pkl")]
+    if not matching_files:
+        raise FileNotFoundError(f"No model files found for target '{target}' in {staging_dir}")
+
+    # Sort by version timestamp (assuming format target_vX_YYYYMMDD_HHMM)
+    matching_files.sort(reverse=True)
+    latest = matching_files[0]
+    return "_".join(latest.split("_")[:-2])
 
 if __name__ == "__main__":
     new_table_name = "current_data_table"

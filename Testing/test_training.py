@@ -2,17 +2,22 @@ import unittest
 import os
 import yaml
 from backend.ML_training.training_program import train_and_save_models
-from backend.ML_training.db_loader import load_data_from_rds
+from db_loader import load_data_from_rds
+from backend.ML_training.predictions import get_latest_model_prefix
 
+# Test class for validating model training, file existence, and output directory contents
 class TestModelTraining(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Run once before all tests.
-        with open("config.yaml", "r") as file: # add more target variables to config.yaml to test on more variables.
+        # add more target variables to config.yaml to test on more variables.
+        with open("config.yaml", "r") as file:
             cls.config = yaml.safe_load(file)
         cls.output_dir = cls.config.get("output_dir", "models")
+        cls.staging_dir = os.path.join(cls.output_dir, "staging")
         cls.targets = cls.config.get("targets", [])
         cls.df = load_data_from_rds()
+        cls.model_dir = os.path.join(cls.output_dir, "staging")
 
         # Ensure models directory exists
         os.makedirs(cls.output_dir, exist_ok=True)
@@ -21,15 +26,11 @@ class TestModelTraining(unittest.TestCase):
         train_and_save_models(cls.df, cls.config)
 
     def test_model_files_exist(self):
-        # Check if model artifacts are saved after training.
         for target in self.targets:
-            model_path = os.path.join(self.output_dir, f"{target}_best_model.pkl")
-            scaler_path = os.path.join(self.output_dir, f"{target}_scaler.pkl")
-            selector_path = os.path.join(self.output_dir, f"{target}_selector.pkl")
-
-            self.assertTrue(os.path.exists(model_path), f"Missing model file: {model_path}")
-            self.assertTrue(os.path.exists(scaler_path), f"Missing scaler file: {scaler_path}")
-            self.assertTrue(os.path.exists(selector_path), f"Missing selector file: {selector_path}")
+            prefix = get_latest_model_prefix(target, self.model_dir)
+            for suffix in ["_best_model.pkl", "_scaler.pkl", "_selector.pkl"]:
+                model_path = os.path.join(self.model_dir, f"{prefix}{suffix}")
+                self.assertTrue(os.path.exists(model_path), f"Missing model file: {model_path}")
 
     def test_model_output_dir_not_empty(self):
         # Make sure that the output directory isn't empty.

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import "./SignupPage.css";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 function SignupPage() {
   const [email, setEmail] = useState("");
@@ -10,60 +9,90 @@ function SignupPage() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const sanitizeInput = (input) => {
-    return input.replace(/[<>"'`]/g, "").trim();
-  };
+  // sanitization to remove characters
+  const sanitizeInput = (input) => input.replace(/[<>"'`]/g, "").trim();
 
-  //email must be valid format '.com'
+  // validates the email is formated correctly
   const validateEmail = (email) => {
     const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return pattern.test(String(email).toLowerCase());
+    return pattern.test(email.toLowerCase());
   };
 
+  // verifies the password meets the requirements
   const validatePassword = (pwd) => {
-    // Minimum 8 characters, one uppercase, one lowercase, one number, one special char
-    const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    const pattern =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     return pattern.test(pwd);
   };
 
-  const handleSignup = async (e) => {
+  // handle the actual signup process be sending POST to the backend
+  const handleSignup = async (username, password) => {
+    try {
+      // sends POST with SANITIZED credentials
+      const res = await fetch("http://localhost:8000/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      // checks for success (200 status code)
+      if (res.ok) {
+        setSuccess("Signup successful. Redirecting...");
+        // auto redirect to login after 1.5 seconds
+        setTimeout(() => navigate("/login"), 1500);
+      } else {
+        setError(data.detail || "Signup failed. Try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      // generic error message
+      setError("Server error. Please try again later.");
+    }
+  };
+
+  // submission form handling
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
 
     const sanitizedEmail = sanitizeInput(email);
     const sanitizedPassword = sanitizeInput(password);
-    const sanitizedConfirmPassword = sanitizeInput(confirmPassword);
+    const sanitizedConfirm = sanitizeInput(confirmPassword);
 
     if (!validateEmail(sanitizedEmail)) {
       setError("Please enter a valid email address.");
       return;
     }
 
-    if (sanitizedPassword !== sanitizedConfirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
+    // validates password meets formated requirements
     if (!validatePassword(sanitizedPassword)) {
-      setError("Password must be at least 8 characters long and include an uppercase letter, lowercase letter, a number, and a special character.");
+      setError(
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+      );
       return;
     }
 
-    console.log("Signup successful:", { email: sanitizedEmail, password: sanitizedPassword });
-    setSuccess("Successful account creation! Redirecting to login.");
+    // checks if password and confirm password match
+    if (sanitizedPassword !== sanitizedConfirm) {
+      setError("Passwords do not match.");
+      return;
+    }
 
-    setTimeout(() => {
-      navigate("/login");
-    }, 2000);
+    setIsSubmitting(true);
+    await handleSignup(sanitizedEmail, sanitizedPassword);
+    setIsSubmitting(false);
   };
 
   return (
     <div className="signup-container">
       <h2>Sign Up</h2>
-      <form onSubmit={handleSignup}>
+      <form onSubmit={handleSubmit} autoComplete="off">
         <input
           type="email"
           placeholder="Email"
@@ -71,6 +100,7 @@ function SignupPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
+
         <div className="password-wrapper">
           <input
             type={showPassword ? "text" : "password"}
@@ -82,11 +112,13 @@ function SignupPage() {
           <button
             type="button"
             className="toggle-password"
+            title="Toggle password visibility"
             onClick={() => setShowPassword((prev) => !prev)}
           >
             {showPassword ? "Hide" : "Show"}
           </button>
         </div>
+
         <input
           type={showPassword ? "text" : "password"}
           placeholder="Confirm Password"
@@ -94,11 +126,18 @@ function SignupPage() {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
+
         {error && <p className="error">{error}</p>}
         {success && <p className="success">{success}</p>}
-        <button type="submit">Register</button>
+
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Creating Account..." : "Register"}
+        </button>
       </form>
-      <p className="Login-Page">Back to Login <Link to="/login">Login here</Link></p>
+
+      <p className="login-link">
+        Already have an account? <Link to="/login">Login here</Link>
+      </p>
     </div>
   );
 }

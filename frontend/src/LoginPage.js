@@ -1,10 +1,12 @@
+// This component handles the login process, including form validation, sanitization of user inputs, and communication with the backend for authentication.
+// After successful login, the user is redirected to the dashboard. If there's an error, it shows an error message.
+
 import React, { useState } from "react";
 import "./LoginPage.css";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
-
+import { useNavigate, Link } from "react-router-dom";
 
 function LoginPage() {
+  // manage form data
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -12,51 +14,75 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const sanitizeInput = (input) => {
-    return input.replace(/[<>"'`]/g, "").trim();
-  };
+  // mitigates XSS attacks by sanitizing input
+  const sanitizeInput = (input) => input.replace(/[<>"'`]/g, "").trim();
 
-  // email format validation
+  // verify email input is valid (uses regex)
   const validateEmail = (email) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(String(email).toLowerCase());
   };
 
-  // function to set delay
+  // added delay for rate limiting after X amount of failed login attempts
   const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
+  // handles login process
+  const handleLogin = async (username, password) => {
+  setError(null);
+  // validates email prior to proceeding
+  if (!validateEmail(username)) {
+    setError("Please enter a valid email address.");
+    return;
+  }
+  // delay rate limit threshold
+  if (attempts >= 3) {
+    await delay(3000);
+  }
 
-    const sanitizedEmail = sanitizeInput(email);
-    const sanitizedPassword = sanitizeInput(password);
+  setIsSubmitting(true);
 
+  try {
+    // makes the POST request to the backend login API
+    const res = await fetch("http://localhost:8000/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      // send SANITIZED email and password
+      body: JSON.stringify({ username, password }),
+    });
 
-    // Checks if email is valid before sending to the backend
-    if (!validateEmail(sanitizedEmail)) {
-        setError("Please enter a valid email address.")
-        return;
-    }
+    const data = await res.json();
 
-    setIsSubmitting(true);
-
-    // Delay comes into play with too many login attempts
-    if (attempts >= 3) {
-        await delay(3000); //basic rate limiting delay. Enhance on backend
-    }
-
-    // Replace with real login API (backend logic)
-    if (sanitizedEmail === "user@example.com" && sanitizedPassword === "password") {
+    // checks for success (200 status code)
+    if (res.ok) {
+      localStorage.setItem("token", data.access_token);
+      // Dashboard redirect
       navigate("/dashboard");
     } else {
-        setAttempts((prev) => prev + 1);
-        //keep error vauge to prevent error leaks
-        setError("Login failed. Please try again.");
+      // hanldes login failures and increments
+      setAttempts((prev) => prev + 1);
+      setError(data.detail || "Login failed.");
     }
+  } catch (err) {
+    console.error(err);
+    // Show generic failure to user (this helps with security as it does not give direct logical information away)
+    setError("Server error. Please try again later.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
-    setIsSubmitting(false)
-  };
+  // function triggers when the login form is submitted
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError(null);
+
+  const sanitizedEmail = sanitizeInput(email);
+  const sanitizedPassword = sanitizeInput(password);
+
+  await handleLogin(sanitizedEmail, sanitizedPassword);
+};
+
+
 
   return (
     <div className="login-container">
@@ -81,7 +107,8 @@ function LoginPage() {
           {isSubmitting ? "Signing In..." : "Sign In"}
         </button>
       </form>
-      <p className="signup-link">Don't have an account? <Link to="/signup">Sign up here</Link>
+      <p className="signup-link">
+        Don't have an account? <Link to="/signup">Sign up here</Link>
       </p>
     </div>
   );

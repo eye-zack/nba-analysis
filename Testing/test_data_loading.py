@@ -1,5 +1,5 @@
 import unittest
-from backend.ML_training.db_loader import load_data_from_rds
+from db_loader import load_data_from_rds
 import pandas as pd
 
 class TestDataLoading(unittest.TestCase):

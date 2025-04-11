@@ -14,7 +14,7 @@ class TestAuthRoutes(unittest.TestCase):
         self.client = TestClient(app)
         self.test_user = {
             "username": "testuser@example.com",
-            "password": "TestP@ssword!"
+            "password": "TestP@ssword2"
         }
 
     def test_1_signup_user(self):

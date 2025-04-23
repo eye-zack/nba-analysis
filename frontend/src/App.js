@@ -6,6 +6,7 @@ import LoginPage from "./LoginPage";
 import DashboardPage from "./DashboardPage";
 import SignupPage from "./SignupPage";
 import PrivateRoute from './PrivateRoute';
+import User from './UserPage';
 
 function App() {
   return (
@@ -20,6 +21,13 @@ function App() {
               <DashboardPage />
             </PrivateRoute>
           }
+        />
+        <Route path="/user" 
+        element={
+          <PrivateRoute>
+            <User />
+          </PrivateRoute>
+        } 
         />
         {/* Catch-all route for undefined paths */}
         <Route path="*" element={<Navigate to="/login" replace />} />

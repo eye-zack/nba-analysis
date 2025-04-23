@@ -136,7 +136,7 @@ def run_scrape_job():
         combined_df.columns = [col.strip() for col in combined_df.columns]
 
         # Insert data into the database table
-        combined_df.to_sql(TABLE_NAME, engine, if_exists='append', index=False)
+        combined_df.to_sql(TABLE_NAME, engine, if_exists='replace', index=False)
         logger.info(f"Data successfully inserted into: {TABLE_NAME}")
 
         return True

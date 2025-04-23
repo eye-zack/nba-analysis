@@ -55,12 +55,18 @@ function LoginPage() {
     // checks for success (200 status code)
     if (res.ok) {
       localStorage.setItem("token", data.access_token);
+      localStorage.setItem("user", JSON.stringify({
+        username: username, 
+        favorite_team: data.favorite_team
+      }));
       // Dashboard redirect
-      navigate("/dashboard");
+      navigate("/user");
     } else {
       // hanldes login failures and increments
       setAttempts((prev) => prev + 1);
-      setError(data.detail || "Login failed.");
+      setError(data.detail ||
+        (res.status === 401 ? "Invalid credentials" : "Login failed.")
+        );
     }
   } catch (err) {
     console.error(err);

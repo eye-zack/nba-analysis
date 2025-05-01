@@ -1,0 +1,46 @@
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+env/
+
+# Jupyter and IPython
+.ipynb_checkpoints/
+
+# Model artifacts
+*.pkl
+*.joblib
+*.json
+*.h5
+*.onnx
+
+# Configs and sensitive files
+.env
+*.sqlite3
+*.db
+output.sql
+
+# Log files
+*.log
+
+# Test outputs
+.coverage
+htmlcov/
+.cache/
+
+# Frontend (if using React)
+node_modules/
+build/
+dist/
+
+# VSCode and IDEs
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db

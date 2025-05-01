@@ -45,10 +45,10 @@ The NBA Three-point Analysis system is a machine learning based tool designed to
       'pytest'
 
 ## Structure Overview
-   backend/ contains FastApi server & ML Pipeline
-   frontend/ contains React app UI
-   testing/ contains test scripts
-   models/ contains saved models
+   * backend/ contains FastApi server & ML Pipeline
+   * frontend/ contains React app UI
+   * testing/ contains test scripts
+   * models/ contains saved models
 
 ## Notes:
   * Developed as a capstone project for CS499.

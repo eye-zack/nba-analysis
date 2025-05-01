@@ -1,21 +1,25 @@
-# nba-analysis
+# NBA Threee-Point Analysis System
 
-The NBA Three point show analysis system is a machine learning based tool designed to analyze and predict trends in NBA three point shooting. It utilizes historical data and current (real-time) data to evaluate the three point attempts and its impact on team success. 
+The NBA Three-point Analysis system is a machine learning based tool designed to analyze and predict trends in NBA three point shooting. It utilizes historical data and current (real-time) data to evaluate the three point attempts and its impact on team success. 
 
-Features include:
+Features:
+
 * Data Collection and Integration 
-    * Retrieves game statistics from APIs (NBA API)
-    * Stores structured data within a database for analysis
-    * Cleans and verifies the data integrity
+    * Retrieves game statistics using NBA API.
+    * Structures and stores data in a relational database.
+    * Perfroms data cleaning and validation to ensure integrity.
+      
 * Statistical Analysis
-    * Identifies historical trends in three point attempts
-    * Analyzes the correlation between three point atttempts and team success
-    * Generates reports and visualization
+    * Identifies historical trends in three-point attempts.
+    * Analyzes the correlation between three-point atttempts and team success.
+    * Generates summary reports and visual analytics.
+      
 * Machine Learning
-    * Implements predictive modeling for future three point trends along with current trends
-    * Allows for input to customize parameters
-    * Updates models in real time
+    * Trains predictive models to forecast future trends in three-point shooting.
+    * Allows for input to filter custom analysis. 
+    * Continuously updates models with new data.
+   
 * User Interface
-    * Interactive dashboard for exploring trends
-    * Downloadable reports and visual graphs
+    * Provides an interactive web dashboard for analytics.
+    * Supports downloadable reports and graphical visualizations. 
     

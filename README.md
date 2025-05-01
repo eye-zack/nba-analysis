@@ -23,3 +23,16 @@ Features:
     * Provides an interactive web dashboard for analytics.
     * Supports downloadable reports and graphical visualizations. 
     
+* Getting Started
+  1. Clone the repo.
+  2. change to the repo directory
+  3. install requirements.txt
+     'pip install -r requirements.txt'
+  4. start the backend seerver
+     'uvicorn main:app --reload'
+  5. start the frontend service
+     'npm start' (make sure you are in the frontend directory)
+
+* Notes:
+  * Developed as a capstone project for CS499.
+  * Designed to support future enhancements.  

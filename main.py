@@ -2,7 +2,7 @@ import logging
 from dotenv import load_dotenv
 import yaml
 from db_loader import load_data_from_rds
-from training_program import train_and_save_models
+from backend.ML_training.training_program import train_and_save_models
 import os
 
 def main():

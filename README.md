@@ -37,10 +37,13 @@ The NBA Three-point Analysis system is a machine learning based tool designed to
   5. start the backend seerver
      'uvicorn main:app --reload'
   6. start the frontend service
-     'cd fronteend'
+     'cd frontend'
      'npm install'
      'npm start'
-   7. Optional testing
+  7. start the docker container (requires DB Username and Password)
+     'cd Scraping/Current_Stats'
+     'docker-compose up --build'
+  8. Optional testing
       'cd testing'
       'pytest'
 

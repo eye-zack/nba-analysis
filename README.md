@@ -40,8 +40,8 @@ The NBA Three-point Analysis system is a machine learning based tool designed to
      'cd frontend'
      'npm install'
      'npm start'
-  7. start the docker container (requires DB Username and Password)
-     'cd Scraping/Current_Stats'
+  7. start the docker container (requires DB Username and Password)\
+     'cd Scraping/Current_Stats'\
      'docker-compose up --build'
   8. Optional testing
       'cd testing'
@@ -52,6 +52,7 @@ The NBA Three-point Analysis system is a machine learning based tool designed to
    * frontend/ contains React app UI
    * testing/ contains test scripts
    * models/ contains saved models
+   * Scraping/ contains docker-container for accessing nba_api
 
 ## Notes:
   * Developed as a capstone project for CS499.

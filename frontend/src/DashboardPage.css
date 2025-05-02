@@ -5,9 +5,10 @@
   
   .iframe-wrapper {
     position: relative;
-    width: 100%;
-    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    width: 1400px;
+    padding-top: 45%;
     overflow: hidden;
+    margin: 0 auto;
   }
   
   .iframe-wrapper iframe {

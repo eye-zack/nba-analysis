@@ -6,11 +6,45 @@ function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [favoriteTeam, setFavoriteTeam] = useState("");
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  const nbaTeams = [
+    "Atlanta Hawks",
+    "Boston Celtics",
+    "Brooklyn Nets",
+    "Charlotte Hornets",
+    "Chicago Bulls",
+    "Cleveland Cavaliers",
+    "Dallas Mavericks",
+    "Denver Nuggets",
+    "Detroit Pistons",
+    "Golden State Warriors",
+    "Houston Rockets",
+    "Indiana Pacers",
+    "LA Clippers",
+    "Los Angeles Lakers",
+    "Memphis Grizzlies",
+    "Miami Heat",
+    "Milwaukee Bucks",
+    "Minnesota Timberwolves",
+    "New Orleans Pelicans",
+    "New York Knicks",
+    "Oklahoma City Thunder",
+    "Orlando Magic",
+    "Philadelphia 76ers",
+    "Phoenix Suns",
+    "Portland Trail Blazers",
+    "Sacramento Kings",
+    "San Antonio Spurs",
+    "Toronto Raptors",
+    "Utah Jazz",
+    "Washington Wizards"
+  ];
 
   // sanitization to remove characters
   const sanitizeInput = (input) => input.replace(/[<>"'`]/g, "").trim();
@@ -29,13 +63,13 @@ function SignupPage() {
   };
 
   // handle the actual signup process be sending POST to the backend
-  const handleSignup = async (username, password) => {
+  const handleSignup = async (username, password, team) => {
     try {
       // sends POST with SANITIZED credentials
       const res = await fetch("http://localhost:8000/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, favorite_team: team }),
       });
 
       const data = await res.json();
@@ -84,8 +118,14 @@ function SignupPage() {
       return;
     }
 
+    // checks if team was selected
+    if (!favoriteTeam) {
+      setError("Please select a favorite NBA team.");
+      return;
+    }
+
     setIsSubmitting(true);
-    await handleSignup(sanitizedEmail, sanitizedPassword);
+    await handleSignup(sanitizedEmail, sanitizedPassword, favoriteTeam);
     setIsSubmitting(false);
   };
 
@@ -126,6 +166,20 @@ function SignupPage() {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
+        
+        <select
+          value={favoriteTeam}
+          onChange={(e) => setFavoriteTeam(e.target.value)}
+          required
+          className="team-select"
+        >
+          <option value="">Select your favorite NBA team</option>
+          {nbaTeams.map((team) => (
+            <option key={team} value={team}>
+              {team}
+            </option>
+          ))}
+        </select>
 
         {error && <p className="error">{error}</p>}
         {success && <p className="success">{success}</p>}

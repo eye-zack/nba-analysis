@@ -25,7 +25,7 @@ The NBA Three-point Analysis system is a machine learning based tool designed to
     
 ## Getting Started
   1. Clone the repo.
-     'git clone https://github.com/cwestrichScholar/nba-analysis.git'
+     'git clone https://github.com/eye-zack/nba-analysis.git'
   2. change to the repo directory
      'cd nba-analysis'
   3. run the command to setup a virtual environment.

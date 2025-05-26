@@ -1,4 +1,4 @@
-## NBA Threee-Point Analysis System
+## NBA Three-Point Analysis System
 
 The NBA Three-point Analysis system is a machine learning based tool designed to analyze and predict trends in NBA three point shooting. It utilizes historical data and current (real-time) data to evaluate the three point attempts and its impact on team success. 
 
